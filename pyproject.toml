@@ -1,0 +1,19 @@
+[project]
+name = "stock-newsletter-with-mcp"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "asmina", email = "asminaa439@gmail.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "fastmcp>=4.0.5",
+]
+
+[project.scripts]
+stock-newsletter-with-mcp = "stock_newsletter_with_mcp:main"
+
+[build-system]
+requires = ["uv_build>=0.12.18,<0.13.0"]
+build-backend = "uv_build"

@@ -1,0 +1,7 @@
+{
+    "food" : ["eatingout"],
+    "grocery" : ["grocery"],
+    "extra expense" : ["dress shopping, other shopping"],
+    "essentials" : ["gym","subsciptions"],
+    "travel" : ["all travel tickets"]
+}
