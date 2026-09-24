@@ -8,31 +8,38 @@ category_path = os.path.join(os.path.dirname(__file__),"categories.json")
 
 # Postgres connection string, e.g. from Supabase or Neon. Set it as an
 # environment variable in FastMCP Cloud so the data survives restarts.
-DATABASE_URL = os.environ.get("DATABASE_URL")
-if not DATABASE_URL:
-    raise RuntimeError("DATABASE_URL environment variable is not set")
+_db_ready = False
 
 def connect():
+    # Connect lazily: the build step imports this file without network access,
+    # so nothing may touch the database at import time.
+    global _db_ready
+    database_url = os.environ.get("DATABASE_URL")
+    if not database_url:
+        raise RuntimeError("DATABASE_URL environment variable is not set")
     # prepare_threshold=None keeps it working behind connection poolers (Supabase/Neon)
-    return psycopg.connect(DATABASE_URL, prepare_threshold=None)
+    conn = psycopg.connect(database_url, prepare_threshold=None)
+    if not _db_ready:
+        initialize_db(conn)
+        _db_ready = True
+    return conn
 
 def rows_as_dicts(cur):
     cols = [i[0] for i in cur.description]
     return [dict(zip(cols,r)) for r in cur.fetchall()]
 
-def initialize_db():
-    with connect() as c :
-        c.execute(
-            """CREATE TABLE IF NOT EXISTS expense(
-            id SERIAL PRIMARY KEY,
-            date TEXT NOT NULL,
-            category TEXT NOT NULL,
-            amount DOUBLE PRECISION NOT NULL,
-            note TEXT DEFAULT ' '
-              )
-            """
-        )
-initialize_db()
+def initialize_db(c):
+    c.execute(
+        """CREATE TABLE IF NOT EXISTS expense(
+        id SERIAL PRIMARY KEY,
+        date TEXT NOT NULL,
+        category TEXT NOT NULL,
+        amount DOUBLE PRECISION NOT NULL,
+        note TEXT DEFAULT ' '
+          )
+        """
+    )
+    c.commit()
 
 @mcp_server.tool
 def add_expense(date,amount,category,note= ' '):
